@@ -68,7 +68,7 @@ class YOLOv7Adapter(ModelAdapter):
         model.eval()
 
         ignored_layers = self._get_pruning_ignored_layers(
-            model
+            model,idx = [1,2]
         )
 
         return ModelBundle(
@@ -139,6 +139,10 @@ class YOLOv7Adapter(ModelAdapter):
                 "optimizer": None,
             }
 
+        # Carry the pruning record into the checkpoint and subsequent fine-tuning runs.
+        if "pruning" in bundle.metadata:
+            checkpoint["pruning"] = copy.deepcopy(bundle.metadata["pruning"])
+
         torch.save(
             checkpoint,
             output_path
@@ -148,5 +152,3 @@ class YOLOv7Adapter(ModelAdapter):
             f"Saved optimized checkpoint to:\n"
             f"{output_path}"
         )
-
-        

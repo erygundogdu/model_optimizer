@@ -1,5 +1,9 @@
 import torch
+import sys
+import torch
+import torch.nn as nn
 
+sys.path.insert(0, r"C:\Users\statb\Desktop\yolov7")
 from optimizer.adapters.yolov7 import (
     YOLOv7Adapter
 )
@@ -10,15 +14,15 @@ from optimizer.pipeline import (
 
 
 YOLOV7_REPO = (
-    r"C:\Users\eray.gundogdu\Desktop\yolov7"
+    r"C:\Users\statb\Desktop\yolov7"
 )
 
 WEIGHTS = (
-    r"C:\Users\eray.gundogdu\Desktop\model_optimizer\best.pt"
+    r"C:\Users\statb\Desktop\yolov7\runs\train\VISDRONE_TINY_TEST_SPD3\weights\best.pt"
 )
 
 OUTPUT = (
-    r"C:\Users\eray.gundogdu\Desktop"
+    r"C:\Users\statb\Desktop"
     r"\model_optimizer\pruned.pt"
 )
 #def channel_prune(model, equal, image.T)
@@ -32,8 +36,8 @@ DEVICE = (
 INPUT_SHAPE = (
     1,
     3,
-    1664,
-    1664
+    1280,
+    1280
 )     
 PRUNING_RATIO = 0.1
 
