@@ -1,0 +1,38 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments and build output
+.venv/
+venv/
+env/
+build/
+dist/
+*.egg-info/
+
+# Model checkpoints and training output
+*.pt
+*.pth
+*.onnx
+/runs/
+/wandb/
+/gamma.png
+events.out.tfevents.*
+
+# Local settings and secrets
+.vscode/
+.idea/
+.env
+.env.*
+!.env.example
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
