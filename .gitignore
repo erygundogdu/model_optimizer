@@ -17,7 +17,6 @@ dist/
 *.egg-info/
 
 # Model checkpoints and training output
-*.pt
 *.pth
 *.onnx
 /runs/

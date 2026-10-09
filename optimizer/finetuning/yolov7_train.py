@@ -1,7 +1,7 @@
 """Fine-tune factorized or channel-pruned YOLOv7 models without rebuilding YAML.
 
 Launch through the repository-root finetune_pruned.py to configure YOLOv7 imports.
-Example: python finetune_pruned.py --weights pruned.pt --data ../yolov7/data/SINOP_1664/data.yaml --img-size 1664 1664 --device 0
+Example: python finetune_pruned.py --weights pruned.pt --data /path/to/data.yaml --device 0
 Channel pruning: use --weights structured_pruned.pt with the same options.
 """
 import argparse
@@ -33,7 +33,7 @@ from utils.autoanchor import check_anchors
 from utils.datasets import create_dataloader
 from utils.general import labels_to_class_weights, increment_path, labels_to_image_weights, init_seeds, \
     fitness, strip_optimizer, get_latest_run, check_dataset, check_file, check_img_size, \
-    set_logging, one_cycle, colorstr, freeze_bn
+    set_logging, one_cycle, colorstr
 from utils.loss import ComputeLoss, ComputeLossOTA
 from utils.plots import plot_images, plot_labels, plot_results, plot_evolution
 from utils.torch_utils import ModelEMA, select_device, torch_distributed_zero_first, is_parallel
@@ -41,6 +41,17 @@ from utils.wandb_logging.wandb_utils import WandbLogger, check_wandb_resume
 
 #from debug import copy_detect_head_class
 logger = logging.getLogger(__name__)
+
+
+def freeze_bn(model):
+    """Freeze BN statistics and affine parameters without a custom YOLOv7 helper."""
+    for module in model.modules():
+        if isinstance(module, nn.BatchNorm2d):
+            module.eval()
+            for parameter in module.parameters():
+                parameter.requires_grad_(False)
+
+
 def load_pruned_model(weights, device, nc):
     # Preserve both factorized modules and structurally reduced channel widths.
     # Do not fuse here: channel-pruned checkpoints still have trainable BN layers.
@@ -571,47 +582,8 @@ def train(hyp, opt, device, tb_writer=None):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(allow_abbrev=False)
-    parser.add_argument('--weights', type=str, default='pruned.pt', help='factorized or channel-pruned checkpoint path')
-    parser.add_argument('--cfg', type=str, default='', help='model.yaml path')
-    parser.add_argument('--data', type=str, default='', help='data.yaml path (required for a new run)')
-    parser.add_argument('--hyp', type=str, default='data/hyp.scratch.p5.yaml', help='hyperparameters path')
-    parser.add_argument('--epochs', type=int, default=30)
-    parser.add_argument('--batch-size', type=int, default=8, help='total batch size for all GPUs')
-    parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='[train, test] image sizes')
-    parser.add_argument('--rect', action='store_true', help='rectangular training')
-    parser.add_argument('--resume', nargs='?', const=True, default=False, help='resume most recent training')
-    parser.add_argument('--nosave', action='store_true', help='only save final checkpoint')
-    parser.add_argument('--notest', action='store_true', help='only test final epoch')
-    parser.add_argument('--noautoanchor', action='store_true', help='disable autoanchor check')
-    parser.set_defaults(evolve=False, noautoanchor=True)
-    parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
-    parser.add_argument('--cache-images', action='store_true', help='cache images for faster training')
-    parser.add_argument('--image-weights', action='store_true', help='use weighted image selection for training')
-    parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
-    parser.add_argument('--multi-scale', action='store_true', help='vary img-size +/- 50%%')
-    parser.add_argument('--single-cls', action='store_true', help='train multi-class data as single-class')
-    parser.add_argument('--adam', action='store_true', help='use torch.optim.Adam() optimizer')
-    parser.add_argument('--sync-bn', action='store_true', help='use SyncBatchNorm, only available in DDP mode')
-    parser.add_argument('--local_rank', type=int, default=-1, help='DDP parameter, do not modify')
-    parser.add_argument('--workers', type=int, default=2, help='maximum number of dataloader workers')
-    parser.add_argument('--project', default='runs/train', help='save to project/name')
-    parser.add_argument('--entity', default=None, help='W&B entity')
-    parser.add_argument('--name', default='pruned_finetune', help='save to project/name')
-    parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
-    parser.add_argument('--quad', action='store_true', help='quad dataloader')
-    parser.add_argument('--linear-lr', action='store_true', help='linear LR')
-    parser.add_argument('--label-smoothing', type=float, default=0.0, help='Label smoothing epsilon')
-    parser.add_argument('--upload_dataset', action='store_true', help='Upload dataset as W&B artifact table')
-    parser.add_argument('--bbox_interval', type=int, default=-1, help='Set bounding-box image logging interval for W&B')
-    parser.add_argument('--save_period', type=int, default=-1, help='Log model after every "save_period" epoch')
-    parser.add_argument('--artifact_alias', type=str, default="latest", help='version of dataset artifact to be used')
-    parser.add_argument('--freeze', nargs='+', type=int, default=[0], help='Freeze layers: backbone of yolov7=50, first3=0 1 2')
-    parser.add_argument('--v5-metric', action='store_true', help='assume maximum recall as 1.0 in AP calculation')
-    parser.add_argument('--freeze_bn', action='store_true', help='freeze BatchNorm layers from loaded base weights')
-    parser.add_argument('--lr0', type=float, default=1e-4, help='fine-tuning initial learning rate')
-    parser.add_argument('--warmup-epochs', type=float, default=1.0)
-    parser.add_argument('--warmup-bias-lr', type=float, default=1e-4)
+    from optimizer.finetuning.cli import build_parser
+    parser = build_parser()
     opt = parser.parse_args()
     if not opt.resume and not opt.data:
         parser.error('--data is required for a new fine-tuning run')

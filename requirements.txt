@@ -1,0 +1,3 @@
+# Install the selected YOLOv7 checkout's requirements first.
+# This is the optimizer's additional dependency; no YOLOv7 path is hardcoded here.
+torch-pruning==1.6.1

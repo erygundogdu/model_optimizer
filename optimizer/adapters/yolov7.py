@@ -5,20 +5,16 @@ from pathlib import Path
 
 from optimizer.adapters.base import ModelAdapter
 from optimizer.core.model_bundle import ModelBundle
+from optimizer.paths import DEFAULT_YOLOV7_REPO, resolve_yolov7_repo
 
 
 class YOLOv7Adapter(ModelAdapter):
 
     def __init__(
         self,
-        repo_path: str
+        repo_path: str = DEFAULT_YOLOV7_REPO
     ):
-        self.repo_path = Path(repo_path).resolve()
-
-        if not self.repo_path.exists():
-            raise FileNotFoundError(
-                f"YOLOv7 repo not found: {self.repo_path}"
-            )
+        self.repo_path = resolve_yolov7_repo(repo_path)
 
     def _make_yolov7_importable(self):
 
@@ -35,7 +31,7 @@ class YOLOv7Adapter(ModelAdapter):
 
         self._make_yolov7_importable()
 
-        weights_path = Path(weights_path).resolve()
+        weights_path = Path(weights_path).expanduser().resolve()
 
         if not weights_path.exists():
             raise FileNotFoundError(
@@ -114,7 +110,8 @@ class YOLOv7Adapter(ModelAdapter):
 
         output_path = Path(
             output_path
-        ).resolve()
+        ).expanduser().resolve()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
         model = bundle.model.cpu()
         model.eval()
